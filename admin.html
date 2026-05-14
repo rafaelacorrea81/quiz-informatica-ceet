@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administração - Quiz Técnico</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container" style="max-width: 1000px;">
+        
+        <!-- Tela de Login -->
+        <div id="login-screen" class="screen active">
+            <header class="header-main">
+                <h1>Acesso da Professora</h1>
+                <h2>Área Administrativa do Quiz</h2>
+            </header>
+            
+            <div class="form-container">
+                <p>Insira a senha de acesso para visualizar o ranking em tempo real.</p>
+                
+                <div class="input-group">
+                    <label for="admin-password">Senha:</label>
+                    <input type="password" id="admin-password" placeholder="Digite a senha">
+                </div>
+
+                <div id="login-error" class="error-message hidden">Senha incorreta.</div>
+                
+                <button id="btn-login" class="btn-primary btn-large">Acessar Ranking</button>
+            </div>
+            
+            <div class="admin-link">
+                <a href="index.html">Voltar para o Quiz</a>
+            </div>
+        </div>
+
+        <!-- Tela do Dashboard -->
+        <div id="dashboard-screen" class="screen hidden">
+            <header class="admin-header">
+                <div>
+                    <h1>Ranking ao Vivo</h1>
+                    <span id="connection-status" class="badge">Aguardando Conexão...</span>
+                </div>
+                <div class="action-container" style="margin-top: 0;">
+                    <button id="btn-export" class="btn-secondary">Exportar CSV</button>
+                    <button id="btn-logout" class="btn-secondary">Sair</button>
+                </div>
+            </header>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Posição</th>
+                            <th>Aluno</th>
+                            <th>Turma</th>
+                            <th>Pontuação</th>
+                            <th>Acertos</th>
+                            <th>Tempo</th>
+                            <th>Data/Hora</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ranking-body">
+                        <tr>
+                            <td colspan="7" class="center">Carregando dados...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="firebase-config.js"></script>
+    <script type="module" src="admin.js"></script>
+</body>
+</html>
