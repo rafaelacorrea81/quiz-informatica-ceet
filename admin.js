@@ -58,6 +58,7 @@ function initFirebaseListener() {
         return;
     }
 
+    console.log("Firebase conectado! Inicializando listener para a coleção 'quizResults'...");
     connectionStatus.textContent = "Conectado ao vivo";
     connectionStatus.style.background = "#ECFDF5";
     connectionStatus.style.color = "#059669";
@@ -66,8 +67,10 @@ function initFirebaseListener() {
     
     // Escuta em tempo real
     onSnapshot(q, (snapshot) => {
+        console.log(`Coleção encontrada. Quantidade de documentos recebidos: ${snapshot.size}`);
         const data = [];
         snapshot.forEach((doc) => {
+            console.log(`Dados recebidos do documento ${doc.id}:`, doc.data());
             data.push({ id: doc.id, ...doc.data() });
         });
         processRankingData(data);
@@ -79,10 +82,9 @@ function initFirebaseListener() {
 }
 
 function processRankingData(data) {
-    // Regras de Ordenação: 1. Pontuação (desc), 2. % Acertos (desc), 3. Tempo Total (asc)
+    // Regras de Ordenação: 1. Pontuação (desc), 2. Tempo Total (asc)
     data.sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score;
-        if (b.percentage !== a.percentage) return b.percentage - a.percentage;
         return a.totalTimeSeconds - b.totalTimeSeconds; // Menor tempo ganha
     });
 
@@ -112,11 +114,11 @@ function renderTable(data) {
 
         tr.innerHTML = `
             <td class="${rankClass}">${index + 1}º</td>
-            <td style="font-weight: 500;">${item.studentName}</td>
-            <td>${item.className}</td>
-            <td style="font-weight: bold; color: var(--primary-color);">${item.score}</td>
-            <td>${item.percentage}% (${item.correctAnswers}/${item.correctAnswers + item.wrongAnswers + item.unanswered})</td>
-            <td>${item.totalTimeSeconds}s</td>
+            <td style="font-weight: 500;">${item.studentName || 'N/A'}</td>
+            <td>${item.className || 'N/A'}</td>
+            <td style="font-weight: bold; color: var(--primary-color);">${item.score || 0}</td>
+            <td>${item.correctAnswers !== undefined ? item.correctAnswers : 'N/A'}</td>
+            <td>${item.totalTimeSeconds !== undefined ? item.totalTimeSeconds : 0}s</td>
             <td style="font-size: 0.85rem; color: var(--text-muted);">${dateStr}</td>
         `;
         rankingBody.appendChild(tr);
