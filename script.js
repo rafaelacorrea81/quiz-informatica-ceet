@@ -168,6 +168,7 @@ btnNext.addEventListener('click', nextQuestion);
 btnBack.addEventListener('click', previousQuestion);
 btnRestartQuiz.addEventListener('click', restartQuizConfirm);
 document.getElementById('btn-restart').addEventListener('click', () => location.reload());
+document.getElementById('btn-resend').addEventListener('click', sendResultsToFirebase);
 
 btnSoundToggle.addEventListener('click', () => {
     soundEnabled = !soundEnabled;
@@ -536,6 +537,7 @@ async function showResults() {
 
     // Preparar objeto para salvar
     const resultData = {
+        nickname: studentName,
         studentName: studentName,
         className: studentClass,
         avatar: selectedAvatar,
@@ -546,6 +548,7 @@ async function showResults() {
         percentage: percentage,
         totalTimeSeconds: totalTimeSeconds,
         completedAt: new Date().toISOString(),
+        answers: userAnswers
     };
 
     // Backup local
@@ -553,22 +556,44 @@ async function showResults() {
     localResults.push(resultData);
     localStorage.setItem('quizBackupResults', JSON.stringify(localResults));
 
-    // Enviar Firebase
+    // Salvar na variável global para reenvio caso falhe
+    window.currentResultData = resultData;
+    
+    sendResultsToFirebase();
+}
+
+async function sendResultsToFirebase() {
+    const resultData = window.currentResultData;
+    if (!resultData) return;
+
+    console.log("Finalizando quiz");
+    console.log("Objeto resultData:", resultData);
+
     const statusEl = document.getElementById('upload-status');
+    const btnResend = document.getElementById('btn-resend');
+    
+    statusEl.innerHTML = "<p>Enviando resultados para o ranking...</p>";
+    statusEl.className = "upload-status";
+    btnResend.classList.add('hidden');
+
     if (!db) {
-        statusEl.textContent = "Modo offline/demonstração. Resultado salvo apenas no navegador (Firebase não configurado).";
+        statusEl.innerHTML = "<p>Modo offline/demonstração. Resultado salvo apenas no navegador (Firebase não configurado).</p>";
         statusEl.className = "upload-status error";
         return;
     }
 
     try {
-        await addDoc(collection(db, "quizResults"), resultData);
-        statusEl.textContent = "Resultado enviado para o ranking com sucesso!";
+        const docRef = await addDoc(collection(db, "quizResults"), resultData);
+        console.log("Resultado salvo no Firestore");
+        console.log("ID do documento criado:", docRef.id);
+        
+        statusEl.innerHTML = "<p>Resultado enviado com sucesso</p>";
         statusEl.className = "upload-status success";
     } catch (e) {
-        console.error("Erro ao adicionar documento: ", e);
-        statusEl.textContent = "Erro de conexão ao enviar resultado. Salvo no backup local.";
+        console.error("Erro detalhado ao enviar resultado para Firestore:", e);
+        statusEl.innerHTML = "<p>Erro ao enviar resultado. Tente reenviar.</p>";
         statusEl.className = "upload-status error";
+        btnResend.classList.remove('hidden');
     }
 }
 
