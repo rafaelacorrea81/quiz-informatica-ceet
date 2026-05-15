@@ -7,7 +7,8 @@ const dashboardScreen = document.getElementById('dashboard-screen');
 const btnLogin = document.getElementById('btn-login');
 const inputPassword = document.getElementById('admin-password');
 const loginError = document.getElementById('login-error');
-const rankingBody = document.getElementById('ranking-body');
+const podiumContainer = document.getElementById('podium-container');
+const rankingList = document.getElementById('ranking-list');
 const connectionStatus = document.getElementById('connection-status');
 const btnExport = document.getElementById('btn-export');
 const btnLogout = document.getElementById('btn-logout');
@@ -89,39 +90,69 @@ function processRankingData(data) {
     });
 
     resultsData = data; // Guardar para exportação
-    renderTable(data);
+    renderRanking(data);
 }
 
-function renderTable(data) {
-    rankingBody.innerHTML = '';
-
+function renderRanking(data) {
     if (data.length === 0) {
-        rankingBody.innerHTML = '<tr><td colspan="7" class="center">Nenhum resultado registrado ainda.</td></tr>';
+        podiumContainer.innerHTML = '';
+        rankingList.innerHTML = '<div class="center" style="padding: 20px;">Nenhum resultado registrado ainda.</div>';
         return;
     }
 
+    // --- RENDER PODIUM (Top 3) ---
+    const top3 = data.slice(0, 3);
+    podiumContainer.innerHTML = '';
+    
+    // Ordem visual do Pódio: 2º, 1º, 3º
+    const podiumOrder = [1, 0, 2];
+    podiumOrder.forEach(idx => {
+        if (top3[idx]) {
+            const item = top3[idx];
+            const place = idx + 1;
+            const avatarPath = item.avatar ? `avatars/${item.avatar}` : 'avatars/avatar-01.svg';
+            const html = `
+                <div class="podium-place place-${place} animate-up">
+                    <img src="${avatarPath}" class="podium-avatar" alt="Avatar">
+                    <div class="podium-block">
+                        <span class="podium-name">${item.studentName || 'N/A'}</span>
+                        <span class="podium-score">${item.score || 0} pts</span>
+                    </div>
+                </div>
+            `;
+            podiumContainer.innerHTML += html;
+        }
+    });
+
+    // --- RENDER LISTA ---
+    rankingList.innerHTML = '';
     data.forEach((item, index) => {
-        const tr = document.createElement('tr');
+        const place = index + 1;
+        const avatarPath = item.avatar ? `avatars/${item.avatar}` : 'avatars/avatar-01.svg';
         
-        // Estilo de pódio
-        let rankClass = '';
-        if (index === 0) rankClass = 'rank-1';
-        else if (index === 1) rankClass = 'rank-2';
-        else if (index === 2) rankClass = 'rank-3';
+        let rankStyle = '';
+        if (place === 1) rankStyle = 'color: #D97706;';
+        else if (place === 2) rankStyle = 'color: #6B7280;';
+        else if (place === 3) rankStyle = 'color: #92400E;';
 
-        const dateObj = new Date(item.completedAt);
-        const dateStr = !isNaN(dateObj) ? dateObj.toLocaleString('pt-BR') : 'Data inválida';
-
-        tr.innerHTML = `
-            <td class="${rankClass}">${index + 1}º</td>
-            <td style="font-weight: 500;">${item.studentName || 'N/A'}</td>
-            <td>${item.className || 'N/A'}</td>
-            <td style="font-weight: bold; color: var(--primary-color);">${item.score || 0}</td>
-            <td>${item.correctAnswers !== undefined ? item.correctAnswers : 'N/A'}</td>
-            <td>${item.totalTimeSeconds !== undefined ? item.totalTimeSeconds : 0}s</td>
-            <td style="font-size: 0.85rem; color: var(--text-muted);">${dateStr}</td>
+        const card = document.createElement('div');
+        card.className = 'ranking-card';
+        card.dataset.id = item.id;
+        card.innerHTML = `
+            <div class="card-pos" style="${rankStyle}">${place}º</div>
+            <img src="${avatarPath}" class="card-avatar" alt="Avatar">
+            <div class="card-info">
+                <div class="card-name">${item.studentName || 'N/A'}</div>
+                <div class="card-class">${item.className || 'N/A'}</div>
+            </div>
+            <div class="card-stats">
+                <div class="card-score">${item.score || 0} pts</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">
+                    ${item.correctAnswers !== undefined ? item.correctAnswers : 'N/A'} acertos | ${item.totalTimeSeconds !== undefined ? item.totalTimeSeconds : 0}s
+                </div>
+            </div>
         `;
-        rankingBody.appendChild(tr);
+        rankingList.appendChild(card);
     });
 }
 

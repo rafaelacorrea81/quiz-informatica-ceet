@@ -16,7 +16,14 @@
             </header>
             
             <div class="form-container">
-                <p>Preencha seus dados para iniciar o quiz. Esta atividade aborda os procedimentos de instalação de sistemas operacionais (Windows e Linux).</p>
+                <p>Preencha seus dados e escolha seu avatar para iniciar o quiz.</p>
+                
+                <div class="avatar-section">
+                    <h3>Escolha seu Avatar:</h3>
+                    <div id="avatar-grid" class="avatar-grid">
+                        <!-- Avatares gerados via JS -->
+                    </div>
+                </div>
                 
                 <div class="input-group">
                     <label for="student-name">Nome ou Apelido:</label>
@@ -41,6 +48,10 @@
             <div class="admin-link">
                 <a href="admin.html">Acesso Professora</a>
             </div>
+            
+            <button id="btn-sound-toggle" class="btn-sound floating">
+                🔊 Som Ativado
+            </button>
         </div>
 
         <!-- Tela do Quiz -->
@@ -91,6 +102,11 @@
                 <h1>Relatório de Desempenho</h1>
                 <h2 id="result-student-name">Aluno</h2>
             </header>
+
+            <div class="result-avatar-container">
+                <img id="result-avatar-img" src="avatars/avatar-01.svg" alt="Seu Avatar" class="result-avatar">
+                <div class="result-podium-glow hidden"></div>
+            </div>
 
             <div class="score-card">
                 <div class="score-header">

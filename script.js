@@ -122,6 +122,8 @@ let wrongCount = 0;
 let unansweredCount = 0;
 let studentName = "";
 let studentClass = "";
+let selectedAvatar = "";
+let soundEnabled = true;
 let timerInterval;
 let timeLeft = 30;
 let startTime;
@@ -138,6 +140,8 @@ const btnStart = document.getElementById('btn-start');
 const inputName = document.getElementById('student-name');
 const selectClass = document.getElementById('student-class');
 const startError = document.getElementById('start-error');
+const avatarGrid = document.getElementById('avatar-grid');
+const btnSoundToggle = document.getElementById('btn-sound-toggle');
 
 const elQuestionCounter = document.getElementById('question-counter');
 const elProgressFill = document.getElementById('progress-fill');
@@ -165,6 +169,77 @@ btnBack.addEventListener('click', previousQuestion);
 btnRestartQuiz.addEventListener('click', restartQuizConfirm);
 document.getElementById('btn-restart').addEventListener('click', () => location.reload());
 
+btnSoundToggle.addEventListener('click', () => {
+    soundEnabled = !soundEnabled;
+    btnSoundToggle.textContent = soundEnabled ? '🔊 Som Ativado' : '🔇 Som Desativado';
+});
+
+// Inicializar Avatares
+function initAvatars() {
+    for (let i = 1; i <= 24; i++) {
+        const num = i.toString().padStart(2, '0');
+        const img = document.createElement('img');
+        img.src = `avatars/avatar-${num}.svg`;
+        img.className = 'avatar-item';
+        img.dataset.avatar = `avatar-${num}.svg`;
+        img.addEventListener('click', () => {
+            document.querySelectorAll('.avatar-item').forEach(el => el.classList.remove('selected'));
+            img.classList.add('selected');
+            selectedAvatar = img.dataset.avatar;
+            startError.classList.add('hidden');
+        });
+        avatarGrid.appendChild(img);
+    }
+}
+initAvatars();
+
+// --- SINTETIZADOR DE ÁUDIO ---
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playSound(type) {
+    if (!soundEnabled) return;
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    if (type === 'correct') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(500, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1000, audioCtx.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+    } else if (type === 'wrong') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
+        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+    } else if (type === 'timeout') {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.4);
+        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.5);
+    } else if (type === 'finish') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(600, audioCtx.currentTime + 0.1);
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime + 0.2);
+        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.5);
+    }
+}
+
 function restartQuizConfirm() {
     if (confirm("Tem certeza que deseja reiniciar o quiz? Seu progresso atual será perdido.")) {
         startQuiz();
@@ -190,7 +265,8 @@ function startQuiz() {
     studentName = inputName.value.trim();
     studentClass = selectClass.value;
 
-    if (!studentName || !studentClass) {
+    if (!studentName || !studentClass || !selectedAvatar) {
+        startError.textContent = "Por favor, preencha todos os campos e escolha um avatar.";
         startError.classList.remove('hidden');
         return;
     }
@@ -299,6 +375,8 @@ function startTimer() {
         
         if (timeLeft <= 10) {
             elTimer.classList.add('warning');
+            elTimer.classList.add('pulse');
+            setTimeout(() => elTimer.classList.remove('pulse'), 500);
         }
         if (timeLeft <= 5) {
             elTimer.classList.remove('warning');
@@ -327,6 +405,9 @@ function handleTimeOut() {
     });
 
     showFeedback(false, "Tempo Esgotado!", true);
+    playSound('timeout');
+    document.querySelector('.question-container').classList.add('shake');
+    setTimeout(() => document.querySelector('.question-container').classList.remove('shake'), 500);
 }
 
 // --- VALIDAÇÃO E PONTUAÇÃO ---
@@ -361,6 +442,12 @@ function confirmAnswer() {
     });
 
     showFeedback(isCorrect, isCorrect ? "Correto!" : "Incorreto!");
+    playSound(isCorrect ? 'correct' : 'wrong');
+    
+    if (!isCorrect) {
+        document.querySelector('.question-container').classList.add('shake');
+        setTimeout(() => document.querySelector('.question-container').classList.remove('shake'), 500);
+    }
 }
 
 function showFeedback(isCorrect, title, isTimeout = false) {
@@ -440,12 +527,18 @@ async function showResults() {
         perfMessage.className = "performance-message text-danger";
     }
 
+    // Definir Avatar na tela final
+    document.getElementById('result-avatar-img').src = `avatars/${selectedAvatar}`;
+    document.querySelector('.result-podium-glow').classList.remove('hidden');
+    playSound('finish');
+
     buildReviewList();
 
     // Preparar objeto para salvar
     const resultData = {
         studentName: studentName,
         className: studentClass,
+        avatar: selectedAvatar,
         score: score,
         correctAnswers: correctCount,
         wrongAnswers: wrongCount,
@@ -453,7 +546,6 @@ async function showResults() {
         percentage: percentage,
         totalTimeSeconds: totalTimeSeconds,
         completedAt: new Date().toISOString(),
-        // answers: userAnswers // Omitindo o array de respostas para não pesar muito o BD na versão gratuita, ou manter se quiser análise detalhada. Vamos salvar básico.
     };
 
     // Backup local
