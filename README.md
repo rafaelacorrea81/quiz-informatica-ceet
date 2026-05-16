@@ -48,7 +48,37 @@ Para que os alunos acessem o quiz pelo celular ou laboratório e você receba to
    service cloud.firestore {
      match /databases/{database}/documents {
        match /quizResults/{document} {
-         allow create: if true;
+         allow create: if request.resource.data.keys().hasOnly([
+           'nickname',
+           'studentName',
+           'className',
+           'avatar',
+           'score',
+           'correctAnswers',
+           'wrongAnswers',
+           'unanswered',
+           'percentage',
+           'totalTimeSeconds',
+           'completedAt',
+           'answers'
+         ]) &&
+         request.resource.data.nickname is string &&
+         request.resource.data.nickname.size() >= 1 &&
+         request.resource.data.nickname.size() <= 30 &&
+         request.resource.data.studentName is string &&
+         request.resource.data.className is string &&
+         request.resource.data.avatar is string &&
+         request.resource.data.score is number &&
+         request.resource.data.score >= 0 &&
+         request.resource.data.correctAnswers is number &&
+         request.resource.data.wrongAnswers is number &&
+         request.resource.data.unanswered is number &&
+         request.resource.data.percentage is number &&
+         request.resource.data.percentage >= 0 &&
+         request.resource.data.percentage <= 100 &&
+         request.resource.data.totalTimeSeconds is number &&
+         request.resource.data.completedAt is string &&
+         request.resource.data.answers is list;
          allow read: if true;
          allow update, delete: if false; // Impede alterar ou apagar notas
        }

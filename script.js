@@ -590,7 +590,11 @@ async function sendResultsToFirebase() {
         statusEl.innerHTML = "<p>Resultado enviado com sucesso</p>";
         statusEl.className = "upload-status success";
     } catch (e) {
-        console.error("Erro detalhado ao enviar resultado para Firestore:", e);
+        console.error("Erro ao enviar resultado para Firestore:", {
+            code: e?.code,
+            message: e?.message,
+            error: e
+        });
         statusEl.innerHTML = "<p>Erro ao enviar resultado. Tente reenviar.</p>";
         statusEl.className = "upload-status error";
         btnResend.classList.remove('hidden');

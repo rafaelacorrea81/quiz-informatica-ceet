@@ -1,0 +1,69 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /quizResults/{document} {
+      allow read: if true;
+
+      allow create: if
+        request.resource.data.keys().hasOnly([
+          'nickname',
+          'studentName',
+          'className',
+          'avatar',
+          'score',
+          'correctAnswers',
+          'wrongAnswers',
+          'unanswered',
+          'percentage',
+          'totalTimeSeconds',
+          'completedAt',
+          'answers'
+        ]) &&
+
+        request.resource.data.nickname is string &&
+        request.resource.data.nickname.size() >= 1 &&
+        request.resource.data.nickname.size() <= 30 &&
+
+        request.resource.data.studentName is string &&
+        request.resource.data.studentName.size() >= 1 &&
+        request.resource.data.studentName.size() <= 80 &&
+
+        request.resource.data.className is string &&
+        request.resource.data.className.size() >= 1 &&
+        request.resource.data.className.size() <= 80 &&
+
+        request.resource.data.avatar is string &&
+        request.resource.data.avatar.size() >= 1 &&
+        request.resource.data.avatar.size() <= 80 &&
+
+        request.resource.data.score is number &&
+        request.resource.data.score >= 0 &&
+
+        request.resource.data.correctAnswers is number &&
+        request.resource.data.correctAnswers >= 0 &&
+
+        request.resource.data.wrongAnswers is number &&
+        request.resource.data.wrongAnswers >= 0 &&
+
+        request.resource.data.unanswered is number &&
+        request.resource.data.unanswered >= 0 &&
+
+        request.resource.data.percentage is number &&
+        request.resource.data.percentage >= 0 &&
+        request.resource.data.percentage <= 100 &&
+
+        request.resource.data.totalTimeSeconds is number &&
+        request.resource.data.totalTimeSeconds >= 0 &&
+
+        request.resource.data.completedAt is string &&
+        request.resource.data.completedAt.size() >= 10 &&
+        request.resource.data.completedAt.size() <= 40 &&
+
+        request.resource.data.answers is list &&
+        request.resource.data.answers.size() <= 100;
+
+      allow update, delete: if false;
+    }
+  }
+}
